@@ -1,0 +1,38 @@
+# === Dependencias ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === Archivos de entorno ===
+.env
+.env.local
+.env.*.local
+
+# === Archivos del sistema / editor ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# === Compilados o temporales ===
+dist/
+build/
+coverage/
+*.log
+
+# === Archivos de ejecución ===
+*.pid
+*.seed
+*.pid.lock
+
+# === Archivos de test ===
+jest-html-reporters-*.html
+jest-coverage/
+
+# === Archivos de lock alternativos (si usás otro gestor) ===
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
