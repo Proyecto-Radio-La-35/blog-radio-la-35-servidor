@@ -78,7 +78,7 @@ router.post("/crear", verificarAdmin, async (req, res) => {
   }
 });
 
-// Obtener contenido filtrado por tipo
+// Obtener contenido filtrado por tipo (listado)
 router.get("/", async (req, res) => {
   const { tipo } = req.query;
 
@@ -112,23 +112,43 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        const { data, error } = await supabase
+        // 1. Obtener la publicación por ID
+        const { data: publicacion, error: pubError } = await supabase
             .from("publicaciones")
             .select("*")
-            .eq("id", id) // Buscar por el ID de la publicación
-            .maybeSingle(); // Esperar un solo resultado
+            .eq("id", id)
+            .maybeSingle();
 
-        if (error) {
-            return res.status(500).json({ error: error.message });
+        if (pubError) {
+            return res.status(500).json({ error: pubError.message });
         }
 
-        if (!data) {
+        if (!publicacion) {
             return res.status(404).json({ error: "Contenido no encontrado." });
         }
+        
+        let autorNombre = publicacion.autor_email;
+
+        if (publicacion.autor_email) {
+            const { data: perfil, error: perfilError } = await supabase
+                .from("perfiles")
+                .select("nombre_usuario") 
+                .eq("email", publicacion.autor_email) 
+                .maybeSingle();
+
+            if (!perfilError && perfil) {
+                autorNombre = perfil.nombre_usuario;
+            }
+        }
+        
+        const respuesta = {
+            ...publicacion,
+            nombre_usuario: autorNombre 
+        };
 
         res.json({ 
             success: true,
-            data
+            data: respuesta
         });
     } catch (err) {
         console.error("Error al obtener contenido por ID:", err);
