@@ -21,25 +21,29 @@ router.post("/register", async (req, res) => {
   const isAdmin = ADMIN_EMAILS.includes(email);
 
   if (userId) {
-    const { data: profileData, error: profileError } = await supabase
-      .from("perfiles")
+    const { data: usuarioData, error: usuarioError } = await supabase
+      .from("usuarios")
       .insert([
         { 
-          id: userId, 
-          nombre_usuario: userName, 
-          email: email 
+          id_usuario: userId,
+          nombre_usuario: userName,
+          contrasenia: password,
+          email: email,
+          fecha_registro: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }
       ]);
 
-    if (profileError) {
-      return res.status(500).json({ error: profileError.message });
+    if (usuarioError) {
+      return res.status(500).json({ error: usuarioError.message });
     }
   }
 
   res.json({ 
     user: authData.user, 
     isAdmin, 
-    userName: userName
+    userName
   });
 });
 
@@ -58,14 +62,14 @@ router.post("/login", async (req, res) => {
   let userName = null;
 
   if (userId) {
-    const { data: profile, error: profileError } = await supabase
-      .from("perfiles")
+    const { data: usuario, error: usuarioError } = await supabase
+      .from("usuarios")
       .select("nombre_usuario")
-      .eq("id", userId)
+      .eq("id_usuario", userId)
       .single();
 
-    if (profile && !profileError) {
-      userName = profile.nombre_usuario;
+    if (usuario && !usuarioError) {
+      userName = usuario.nombre_usuario;
     }
   }
 
@@ -73,7 +77,7 @@ router.post("/login", async (req, res) => {
     user: data.user, 
     session: data.session, 
     isAdmin, 
-    userName: userName
+    userName
   });
 });
 
