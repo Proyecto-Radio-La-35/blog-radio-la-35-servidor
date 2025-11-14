@@ -131,7 +131,7 @@ router.get("/:id", async (req, res) => {
 
         if (publicacion.autor_email) {
             const { data: perfil, error: perfilError } = await supabase
-                .from("perfiles")
+                .from("usuarios")
                 .select("nombre_usuario") 
                 .eq("email", publicacion.autor_email) 
                 .maybeSingle();
@@ -193,6 +193,114 @@ router.delete("/:id", verificarAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error("Error al eliminar contenido:", err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+// Crear comentario (solo para entradas)
+router.post("/:id/comentarios", async (req, res) => {
+  const { id } = req.params;
+  const { contenido } = req.body;
+  const token = req.headers.authorization?.replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({ error: "Debes iniciar sesión para comentar." });
+  }
+
+  if (!contenido || !contenido.trim()) {
+    return res.status(400).json({ error: "El comentario no puede estar vacío." });
+  }
+
+  try {
+    // Verificar usuario
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: "Token inválido o expirado." });
+    }
+
+    // Verificar que la publicación existe y es una entrada
+    const { data: publicacion, error: pubError } = await supabase
+      .from("publicaciones")
+      .select("tipo")
+      .eq("id_publicacion", id)
+      .maybeSingle();
+
+    if (pubError) {
+      return res.status(500).json({ error: pubError.message });
+    }
+
+    if (!publicacion) {
+      return res.status(404).json({ error: "Publicación no encontrada." });
+    }
+
+    if (publicacion.tipo !== "entrada") {
+      return res.status(403).json({ error: "Solo se pueden comentar entradas de blog." });
+    }
+
+    // Insertar comentario
+    const { data, error } = await supabase
+      .from("comentarios")
+      .insert([{
+        id_usuario: user.id,
+        id_publicacion: id,
+        contenido: contenido.trim(),
+        fecha_comentario: new Date().toISOString()
+      }])
+      .select();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json({ 
+      success: true, 
+      message: "Comentario publicado exitosamente",
+      data: data[0] 
+    });
+  } catch (err) {
+    console.error("Error al crear comentario:", err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+// Obtener comentarios de una publicación
+router.get("/:id/comentarios", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("comentarios")
+      .select(`
+        id_comentario,
+        contenido,
+        fecha_comentario,
+        id_usuario,
+        usuarios!inner(nombre_usuario)
+      `)
+      .eq("id_publicacion", id)
+      .order("fecha_comentario", { ascending: true });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    // Formatear datos para incluir nombre de usuario
+    const comentariosFormateados = data.map(comentario => ({
+      id_comentario: comentario.id_comentario,
+      contenido: comentario.contenido,
+      fecha_comentario: comentario.fecha_comentario,
+      id_usuario: comentario.id_usuario,
+      nombre_usuario: comentario.usuarios.nombre_usuario
+    }));
+
+    res.json({ 
+      success: true,
+      count: comentariosFormateados.length,
+      data: comentariosFormateados
+    });
+  } catch (err) {
+    console.error("Error al obtener comentarios:", err);
     res.status(500).json({ error: "Error interno del servidor." });
   }
 });
