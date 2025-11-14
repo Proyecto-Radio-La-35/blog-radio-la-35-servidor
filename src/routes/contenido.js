@@ -116,7 +116,7 @@ router.get("/:id", async (req, res) => {
         const { data: publicacion, error: pubError } = await supabase
             .from("publicaciones")
             .select("*")
-            .eq("id", id)
+            .eq("id_publicacion", id)
             .maybeSingle();
 
         if (pubError) {
