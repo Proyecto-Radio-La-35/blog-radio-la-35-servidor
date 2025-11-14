@@ -3,18 +3,10 @@ import { supabase } from "../db/supabaseClient.js";
 
 const router = express.Router();
 
-function getAdmins() {
-  try {
-    const data = fs.readFileSync(adminFilePath, "utf8");
-    const parsedData = JSON.parse(data);
-    return parsedData.admins || [];
-  } catch (error) {
-    console.error("Error al leer el archivo de administradores:", error);
-    return [];
-  }
-}
+const ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(",").map(email => email.trim())
+  : [];
 
-const ADMIN_EMAILS = getAdmins();
 
 // Middleware para verificar admin
 const verificarAdmin = async (req, res, next) => {
