@@ -108,95 +108,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // 1. Obtener la publicación por ID
-        const { data: publicacion, error: pubError } = await supabase
-            .from("publicaciones")
-            .select("*")
-            .eq("id_publicacion", id)
-            .maybeSingle();
-
-        if (pubError) {
-            return res.status(500).json({ error: pubError.message });
-        }
-
-        if (!publicacion) {
-            return res.status(404).json({ error: "Contenido no encontrado." });
-        }
-        
-        let autorNombre = publicacion.autor_email;
-
-        if (publicacion.autor_email) {
-            const { data: perfil, error: perfilError } = await supabase
-                .from("usuarios")
-                .select("nombre_usuario") 
-                .eq("email", publicacion.autor_email) 
-                .maybeSingle();
-
-            if (!perfilError && perfil) {
-                autorNombre = perfil.nombre_usuario;
-            }
-        }
-        
-        const respuesta = {
-            ...publicacion,
-            nombre_usuario: autorNombre 
-        };
-
-        res.json({ 
-            success: true,
-            data: respuesta
-        });
-    } catch (err) {
-        console.error("Error al obtener contenido por ID:", err);
-        res.status(500).json({ error: "Error interno del servidor." });
-    }
-});
-
-// Eliminar contenido por ID
-router.delete("/:id", verificarAdmin, async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Verificar que la publicación existe
-    const { data: publicacion, error: checkError } = await supabase
-      .from("publicaciones")
-      .select("*")
-      .eq("id_publicacion", id)
-      .maybeSingle();
-
-    if (checkError) {
-      return res.status(500).json({ error: checkError.message });
-    }
-
-    if (!publicacion) {
-      return res.status(404).json({ error: "Publicación no encontrada." });
-    }
-
-    // Eliminar la publicación
-    const { error: deleteError } = await supabase
-      .from("publicaciones")
-      .delete()
-      .eq("id_publicacion", id);
-
-    if (deleteError) {
-      return res.status(500).json({ error: deleteError.message });
-    }
-
-    res.json({ 
-      success: true, 
-      message: "Publicación eliminada exitosamente",
-      data: publicacion
-    });
-  } catch (err) {
-    console.error("Error al eliminar contenido:", err);
-    res.status(500).json({ error: "Error interno del servidor." });
-  }
-});
-
 // Crear comentario (solo para entradas)
 router.post("/:id/comentarios", async (req, res) => {
   const { id } = req.params;
@@ -372,6 +283,95 @@ router.get("/comentarios/todos", verificarAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Obtener la publicación por ID
+        const { data: publicacion, error: pubError } = await supabase
+            .from("publicaciones")
+            .select("*")
+            .eq("id_publicacion", id)
+            .maybeSingle();
+
+        if (pubError) {
+            return res.status(500).json({ error: pubError.message });
+        }
+
+        if (!publicacion) {
+            return res.status(404).json({ error: "Contenido no encontrado." });
+        }
+        
+        let autorNombre = publicacion.autor_email;
+
+        if (publicacion.autor_email) {
+            const { data: perfil, error: perfilError } = await supabase
+                .from("usuarios")
+                .select("nombre_usuario") 
+                .eq("email", publicacion.autor_email) 
+                .maybeSingle();
+
+            if (!perfilError && perfil) {
+                autorNombre = perfil.nombre_usuario;
+            }
+        }
+        
+        const respuesta = {
+            ...publicacion,
+            nombre_usuario: autorNombre 
+        };
+
+        res.json({ 
+            success: true,
+            data: respuesta
+        });
+    } catch (err) {
+        console.error("Error al obtener contenido por ID:", err);
+        res.status(500).json({ error: "Error interno del servidor." });
+    }
+});
+
+// Eliminar contenido por ID
+router.delete("/:id", verificarAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verificar que la publicación existe
+    const { data: publicacion, error: checkError } = await supabase
+      .from("publicaciones")
+      .select("*")
+      .eq("id_publicacion", id)
+      .maybeSingle();
+
+    if (checkError) {
+      return res.status(500).json({ error: checkError.message });
+    }
+
+    if (!publicacion) {
+      return res.status(404).json({ error: "Publicación no encontrada." });
+    }
+
+    // Eliminar la publicación
+    const { error: deleteError } = await supabase
+      .from("publicaciones")
+      .delete()
+      .eq("id_publicacion", id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: deleteError.message });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Publicación eliminada exitosamente",
+      data: publicacion
+    });
+  } catch (err) {
+    console.error("Error al eliminar contenido:", err);
     res.status(500).json({ error: "Error interno del servidor." });
   }
 });
