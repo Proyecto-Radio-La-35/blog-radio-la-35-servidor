@@ -1,3 +1,6 @@
+# JSON
+adminEmails.json
+
 # === Dependencias ===
 node_modules/
 npm-debug.log*
