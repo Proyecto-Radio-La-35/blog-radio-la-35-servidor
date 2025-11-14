@@ -305,4 +305,75 @@ router.get("/:id/comentarios", async (req, res) => {
   }
 });
 
+// Eliminar comentario por ID (solo administradores)
+router.delete("/comentarios/:id", verificarAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verificar si existe
+    const { data: comentario, error: checkError } = await supabase
+      .from("comentarios")
+      .select("*")
+      .eq("id_comentario", id)
+      .maybeSingle();
+
+    if (checkError) {
+      return res.status(500).json({ error: checkError.message });
+    }
+
+    if (!comentario) {
+      return res.status(404).json({ error: "Comentario no encontrado." });
+    }
+
+    // Eliminar comentario
+    const { error: deleteError } = await supabase
+      .from("comentarios")
+      .delete()
+      .eq("id_comentario", id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: deleteError.message });
+    }
+
+    res.json({
+      success: true,
+      message: "Comentario eliminado exitosamente",
+      data: comentario
+    });
+  } catch (err) {
+    console.error("Error al eliminar comentario:", err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+// Obtener todos los comentarios (solo admins)
+router.get("/comentarios/todos", verificarAdmin, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("comentarios")
+      .select(`
+        id_comentario,
+        contenido,
+        fecha_comentario,
+        id_publicacion,
+        usuarios(nombre_usuario),
+        publicaciones(titulo)
+      `)
+      .order("fecha_comentario", { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      success: true,
+      count: data.length,
+      data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
 export default router;
