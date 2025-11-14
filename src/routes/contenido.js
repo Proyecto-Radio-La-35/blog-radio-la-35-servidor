@@ -156,5 +156,45 @@ router.get("/:id", async (req, res) => {
     }
 });
 
+// Eliminar contenido por ID
+router.delete("/:id", verificarAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verificar que la publicación existe
+    const { data: publicacion, error: checkError } = await supabase
+      .from("publicaciones")
+      .select("*")
+      .eq("id_publicacion", id)
+      .maybeSingle();
+
+    if (checkError) {
+      return res.status(500).json({ error: checkError.message });
+    }
+
+    if (!publicacion) {
+      return res.status(404).json({ error: "Publicación no encontrada." });
+    }
+
+    // Eliminar la publicación
+    const { error: deleteError } = await supabase
+      .from("publicaciones")
+      .delete()
+      .eq("id_publicacion", id);
+
+    if (deleteError) {
+      return res.status(500).json({ error: deleteError.message });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Publicación eliminada exitosamente",
+      data: publicacion
+    });
+  } catch (err) {
+    console.error("Error al eliminar contenido:", err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
 
 export default router;
