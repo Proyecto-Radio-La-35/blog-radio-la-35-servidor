@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: ["http://localhost:3000", "https://radio-la-35.netlify.app"],
+  origin: ["http://localhost:3000", "https://radio-la-35.netlify.app", "https://radio-la-35.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
