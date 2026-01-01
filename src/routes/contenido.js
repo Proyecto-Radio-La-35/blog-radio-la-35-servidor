@@ -3,11 +3,6 @@ import { supabase } from "../db/supabaseClient.js";
 
 const router = express.Router();
 
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS
-  ? process.env.ADMIN_EMAILS.split(",").map(email => email.trim())
-  : [];
-
-
 // Middleware para verificar admin
 const verificarAdmin = async (req, res, next) => {
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -23,7 +18,13 @@ const verificarAdmin = async (req, res, next) => {
       return res.status(401).json({ error: "Token inválido o expirado." });
     }
 
-    if (!ADMIN_EMAILS.includes(user.email)) {
+    const { data: admin } = await supabase
+    .from("administradores")
+    .select("id_administrador")
+    .eq("id_administrador", user.id)
+    .maybeSingle();
+
+    if (!admin) {
       return res.status(403).json({ error: "Acceso denegado. Solo administradores." });
     }
 
